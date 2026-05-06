@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>CleanLead AI — 30s Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-50: #effbf6;
+    --teal-100: #d4f5e6;
+    --teal-500: #14a37a;
+    --teal-600: #0f8a66;
+    --teal-700: #0c6e52;
+    --teal-900: #06382a;
+    --ink-900: #0c1a17;
+    --ink-700: #233a34;
+    --ink-500: #4a615a;
+    --ink-400: #6b7f78;
+    --line: #e3ebe8;
+    --bg: #fafdfb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(160deg, #f0f7f4 0%, #e8f5ee 50%, #d8eee2 100%);
+    color: var(--ink-900);
+    -webkit-font-smoothing: antialiased;
+    display: grid;
+    place-items: center;
+  }
+
+  /* 1920x1080 stage. Scaled to fit window via JS. */
+  .stage {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, #f0f7f4 0%, #e8f5ee 50%, #d8eee2 100%);
+    transform-origin: center center;
+  }
+
+  /* Subtle grid overlay */
+  .stage::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(20, 163, 122, 0.06), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(15, 138, 102, 0.05), transparent 40%);
+    pointer-events: none;
+  }
+
+  /* ========== SCENE BASE ========== */
+  .scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    display: grid;
+    place-items: center;
+  }
+  .scene.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* ========== ON-SCREEN TEXT (caption) ========== */
+  .caption {
+    position: absolute;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(12, 26, 23, 0.92);
+    color: white;
+    padding: 22px 42px;
+    border-radius: 100px;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 16px 48px rgba(12, 26, 23, 0.25);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+  }
+  .caption.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ========== BROWSER MOCKUP ========== */
+  .browser {
+    width: 1280px;
+    background: white;
+    border-radius: 22px;
+    box-shadow: 0 40px 80px -20px rgba(12, 26, 23, 0.25), 0 16px 32px -8px rgba(12, 26, 23, 0.12);
+    overflow: hidden;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s;
+  }
+  .browser-bar {
+    background: #f3f6f5;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .browser-dots {
+    display: flex; gap: 9px;
+  }
+  .browser-dots span {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+  }
+  .browser-dots span:nth-child(1) { background: #ff6058; }
+  .browser-dots span:nth-child(2) { background: #ffbd2f; }
+  .browser-dots span:nth-child(3) { background: #28c941; }
+  .browser-url {
+    flex: 1;
+    background: white;
+    padding: 9px 18px;
+    border-radius: 9px;
+    font-size: 18px;
+    color: var(--ink-400);
+    border: 1px solid var(--line);
+  }
+
+  .website {
+    padding: 50px 64px;
+    background: #fcfdfc;
+    height: 660px;
+    position: relative;
+  }
+  .web-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .web-logo {
+    font-weight: 700;
+    color: var(--ink-900);
+    font-size: 24px;
+    letter-spacing: -0.01em;
+  }
+  .web-nav {
+    display: flex; gap: 36px;
+    font-size: 18px;
+    color: var(--ink-400);
+  }
+  .web-hero h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    color: var(--ink-900);
+    line-height: 1.1;
+    margin-bottom: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    max-width: 900px;
+  }
+  .web-hero p {
+    font-size: 22px;
+    color: var(--ink-500);
+    margin-bottom: 28px;
+    max-width: 720px;
+  }
+  .web-btn {
+    display: inline-block;
+    background: #2c4a3f;
+    color: white;
+    padding: 16px 28px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* ========== CHAT WIDGET ========== */
+  .chat {
+    position: absolute;
+    bottom: 32px;
+    right: 32px;
+    width: 460px;
+    background: white;
+    border-radius: 22px;
+    box-shadow: 0 32px 64px -16px rgba(12, 26, 23, 0.25), 0 8px 24px -8px rgba(12, 26, 23, 0.1);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transform: scale(0.85) translateY(40px);
+    opacity: 0;
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chat.show {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  .chat.zoom {
+    transform: scale(1.5) translate(-180px, -120px);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chat-header {
+    background: linear-gradient(135deg, var(--teal-600), var(--teal-700));
+    color: white;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .chat-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: grid; place-items: center;
+    font-size: 22px;
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+  .chat-title { font-size: 18px; font-weight: 600; }
+  .chat-status {
+    font-size: 14px; opacity: 0.85;
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 2px;
+  }
+  .chat-status::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: #6ee7a8;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(110, 231, 168, 0.3);
+  }
+  .chat-body {
+    padding: 22px;
+    background: #fafdfb;
+    height: 380px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .msg {
+    max-width: 78%;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 18px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .msg.in { opacity: 1; transform: translateY(0); }
+  .msg.bot {
+    background: white;
+    border: 1px solid var(--line);
+    color: var(--ink-900);
+    align-self: flex-start;
+    border-bottom-left-radius: 6px;
+  }
+  .msg.user {
+    background: var(--teal-600);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 6px;
+  }
+  .typing {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px 0;
+  }
+  .typing span {
+    width: 8px; height: 8px;
+    background: var(--ink-400);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .chat-input {
+    padding: 16px 22px;
+    border-top: 1px solid var(--line);
+    background: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chat-input-box {
+    flex: 1;
+    font-size: 16px;
+    color: var(--ink-400);
+    padding: 11px 14px;
+    background: #f3f6f5;
+    border-radius: 9px;
+  }
+
+  /* ========== PHONE NOTIFICATION (Scene 4) ========== */
+  .phone {
+    width: 380px;
+    height: 760px;
+    background: #1a1a1a;
+    border-radius: 56px;
+    padding: 14px;
+    box-shadow: 0 50px 100px -20px rgba(12, 26, 23, 0.4), 0 16px 32px rgba(12, 26, 23, 0.15);
+    transform: rotate(-4deg);
+  }
+  .phone-screen {
+    background: linear-gradient(180deg, #1a3a30 0%, #0c1a17 100%);
+    width: 100%; height: 100%;
+    border-radius: 44px;
+    position: relative;
+    overflow: hidden;
+    padding: 60px 18px 0;
+  }
+  .phone-time {
+    text-align: center;
+    color: white;
+    font-size: 80px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+    font-family: 'Inter', sans-serif;
+  }
+  .phone-date {
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 18px;
+    margin-bottom: 40px;
+  }
+
+  .notif-card {
+    background: rgba(40, 40, 40, 0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin: 0 4px 12px;
+    color: white;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transform: translateY(-30px);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .notif-card.in {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .notif-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--teal-500), var(--teal-700));
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    font-size: 20px;
+  }
+  .notif-content { flex: 1; min-width: 0; }
+  .notif-row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+  }
+  .notif-app {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .notif-time {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+  }
+  .notif-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .notif-body {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.4;
+  }
+
+  /* Big lead card next to phone */
+  .lead-card {
+    width: 580px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 40px 80px -20px rgba(12, 26, 23, 0.2);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-left: 80px;
+    transform: translateX(40px);
+    opacity: 0;
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+  }
+  .lead-card.in {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  .lead-head {
+    background: var(--teal-50);
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--teal-100);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .lead-pulse {
+    width: 12px; height: 12px;
+    background: var(--teal-500);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(20, 163, 122, 0.2);
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(20, 163, 122, 0.2); }
+    50% { box-shadow: 0 0 0 10px rgba(20, 163, 122, 0); }
+  }
+  .lead-head-title {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--teal-700);
+  }
+  .lead-rows { padding: 8px 28px 24px; }
+  .lead-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.4s ease;
+  }
+  .lead-row.in { opacity: 1; transform: translateY(0); }
+  .lead-row:last-child { border-bottom: none; }
+  .lead-label {
+    font-size: 14px;
+    color: var(--ink-400);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .lead-value {
+    font-size: 18px;
+    color: var(--ink-900);
+    font-weight: 600;
+  }
+
+  /* ========== SCENE 5 — FINAL CTA ========== */
+  .cta-wrap {
+    text-align: center;
+    max-width: 1100px;
+  }
+  .cta-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cta-logo.in { opacity: 1; transform: translateY(0); }
+  .cta-logo-mark {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--teal-500), var(--teal-700));
+    display: grid; place-items: center;
+    box-shadow: 0 12px 32px rgba(15, 138, 102, 0.3);
+  }
+  .cta-logo-mark svg { width: 30px; height: 30px; color: white; }
+  .cta-logo-text {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink-900);
+    letter-spacing: -0.01em;
+  }
+  .cta-headline {
+    font-family: 'Fraunces', serif;
+    font-size: 84px;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--ink-900);
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+  }
+  .cta-headline.in { opacity: 1; transform: translateY(0); }
+  .cta-headline em {
+    font-style: italic;
+    color: var(--teal-600);
+    font-weight: 500;
+  }
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--teal-600);
+    color: white;
+    padding: 24px 48px;
+    border-radius: 14px;
+    font-size: 28px;
+    font-weight: 600;
+    box-shadow: 0 16px 40px rgba(15, 138, 102, 0.35);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+  }
+  .cta-button.in { opacity: 1; transform: translateY(0); }
+  .cta-button svg { width: 28px; height: 28px; }
+
+  /* Progress bar */
+  .progress {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 4px;
+    width: 0%;
+    background: linear-gradient(to right, var(--teal-500), var(--teal-600));
+    z-index: 100;
+  }
+  .progress.run {
+    animation: progress 30s linear forwards;
+  }
+  @keyframes progress {
+    to { width: 100%; }
+  }
+
+  /* Hide cursor while recording */
+  .stage, .stage * { cursor: none; }
+
+  /* Replay button — visible only after demo */
+  .replay {
+    position: fixed;
+    top: 20px; right: 20px;
+    background: var(--teal-600);
+    color: white;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 100px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(12, 26, 23, 0.2);
+    z-index: 1000;
+    display: none;
+  }
+  .replay.show { display: block; cursor: pointer; }
+
+  .start-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 26, 23, 0.92);
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: white;
+    padding: 40px;
+  }
+  .start-overlay h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 48px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .start-overlay p {
+    font-size: 18px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 32px;
+    max-width: 520px;
+  }
+  .start-btn {
+    background: var(--teal-500);
+    color: white;
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<div class="start-overlay" id="startOverlay">
+  <div>
+    <h1>CleanLead AI — 30s Demo</h1>
+    <p>Click below, then start your screen recording. The animation runs exactly 30 seconds.</p>
+    <button class="start-btn" id="startBtn">▶ Play Demo</button>
+    <p style="margin-top: 20px; font-size: 14px; opacity: 0.6;">Recommended: record at 1920×1080 or browser fullscreen for highest quality.</p>
+  </div>
+</div>
+
+<button class="replay" id="replayBtn">↻ Replay</button>
+
+<div class="stage" id="stage">
+
+  <!-- ============ SCENE 1: 0-4s — Visitor lands on cleaning website ============ -->
+  <div class="scene" id="scene1">
+    <div class="browser" id="browser1">
+      <div class="browser-bar">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">🔒 sparkleclean.com</div>
+      </div>
+      <div class="website">
+        <div class="web-header">
+          <div class="web-logo">✦ Sparkle Clean</div>
+          <div class="web-nav"><span>Services</span><span>Pricing</span><span>About</span><span>Contact</span></div>
+        </div>
+        <div class="web-hero">
+          <h2>Trusted home cleaning<br>in Austin since 2014.</h2>
+          <p>Recurring, deep, and move-out cleans. Fully insured & background-checked.</p>
+          <span class="web-btn">Get a Quote</span>
+        </div>
+        <div class="chat" id="chat1">
+          <div class="chat-header">
+            <div class="chat-avatar">✦</div>
+            <div>
+              <div class="chat-title">Sparkle Clean Assistant</div>
+              <div class="chat-status">Online · replies instantly</div>
+            </div>
+          </div>
+          <div class="chat-body" id="chatBody1">
+            <div class="msg bot in">Hi 👋 Looking for a cleaning quote? I can help.</div>
+          </div>
+          <div class="chat-input">
+            <div class="chat-input-box">Type a message...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption" id="cap1">A visitor lands on your cleaning website.</div>
+  </div>
+
+  <!-- ============ SCENE 2: 4-10s — Visitor types request, bot replies ============ -->
+  <div class="scene" id="scene2">
+    <div class="browser" style="transform: scale(1.1);">
+      <div class="browser-bar">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">🔒 sparkleclean.com</div>
+      </div>
+      <div class="website">
+        <div class="web-header">
+          <div class="web-logo">✦ Sparkle Clean</div>
+          <div class="web-nav"><span>Services</span><span>Pricing</span><span>About</span><span>Contact</span></div>
+        </div>
+        <div class="web-hero">
+          <h2>Trusted home cleaning<br>in Austin since 2014.</h2>
+        </div>
+        <div class="chat show" id="chat2">
+          <div class="chat-header">
+            <div class="chat-avatar">✦</div>
+            <div>
+              <div class="chat-title">Sparkle Clean Assistant</div>
+              <div class="chat-status">Online · replies instantly</div>
+            </div>
+          </div>
+          <div class="chat-body" id="chatBody2">
+            <div class="msg bot in">Hi 👋 Looking for a cleaning quote? I can help.</div>
+          </div>
+          <div class="chat-input">
+            <div class="chat-input-box">Type a message...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption" id="cap2">An AI assistant answers right away.</div>
+  </div>
+
+  <!-- ============ SCENE 3: 10-18s — Assistant collects details ============ -->
+  <div class="scene" id="scene3">
+    <div class="chat show" id="chat3" style="position: relative; transform: scale(1.4); width: 540px;">
+      <div class="chat-header">
+        <div class="chat-avatar">✦</div>
+        <div>
+          <div class="chat-title">Sparkle Clean Assistant</div>
+          <div class="chat-status">Online · replies instantly</div>
+        </div>
+      </div>
+      <div class="chat-body" id="chatBody3" style="height: 540px;">
+        <!-- Messages injected by JS -->
+      </div>
+      <div class="chat-input">
+        <div class="chat-input-box">Type a message...</div>
+      </div>
+    </div>
+    <div class="caption" id="cap3">The assistant collects the details you need.</div>
+  </div>
+
+  <!-- ============ SCENE 4: 18-24s — Owner notification ============ -->
+  <div class="scene" id="scene4">
+    <div style="display: flex; align-items: center; justify-content: center;">
+      <div class="phone" id="phone4">
+        <div class="phone-screen">
+          <div class="phone-time">2:47</div>
+          <div class="phone-date">Friday, November 12</div>
+          <div class="notif-card" id="notif4">
+            <div class="notif-icon">✦</div>
+            <div class="notif-content">
+              <div class="notif-row1">
+                <div class="notif-app">CleanLead AI</div>
+                <div class="notif-time">now</div>
+              </div>
+              <div class="notif-title">New Cleaning Lead</div>
+              <div class="notif-body">Sarah · Move-out clean · 2bd/2ba · ZIP 78704 · Friday PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lead-card" id="leadCard">
+        <div class="lead-head">
+          <div class="lead-pulse"></div>
+          <div class="lead-head-title">New Cleaning Lead</div>
+        </div>
+        <div class="lead-rows">
+          <div class="lead-row" data-d="0"><span class="lead-label">Name</span><span class="lead-value">Sarah</span></div>
+          <div class="lead-row" data-d="100"><span class="lead-label">Phone</span><span class="lead-value">512-555-0198</span></div>
+          <div class="lead-row" data-d="200"><span class="lead-label">Service</span><span class="lead-value">Move-out cleaning</span></div>
+          <div class="lead-row" data-d="300"><span class="lead-label">Home</span><span class="lead-value">2 bed / 2 bath</span></div>
+          <div class="lead-row" data-d="400"><span class="lead-label">ZIP</span><span class="lead-value">78704</span></div>
+          <div class="lead-row" data-d="500"><span class="lead-label">Preferred</span><span class="lead-value">Friday afternoon</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="caption" id="cap4">You get the request by email or text.</div>
+  </div>
+
+  <!-- ============ SCENE 5: 24-30s — Final CTA ============ -->
+  <div class="scene" id="scene5">
+    <div class="cta-wrap">
+      <div class="cta-logo" id="ctaLogo">
+        <span class="cta-logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </span>
+        <span class="cta-logo-text">CleanLead AI</span>
+      </div>
+      <h1 class="cta-headline" id="ctaHead">Capture more cleaning<br>quote requests, <em>automatically.</em></h1>
+      <a class="cta-button" id="ctaBtn">
+        Book a free demo
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+  // -----------------------------
+  // Scale stage to fit viewport
+  // -----------------------------
+  function fitStage() {
+    const stage = document.getElementById('stage');
+    const sx = window.innerWidth / 1920;
+    const sy = window.innerHeight / 1080;
+    const s = Math.min(sx, sy);
+    stage.style.transform = `scale(${s})`;
+  }
+  window.addEventListener('resize', fitStage);
+  fitStage();
+
+  // -----------------------------
+  // Demo timeline
+  // -----------------------------
+  function show(id) {
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function showCaption(id) {
+    setTimeout(() => document.getElementById(id).classList.add('show'), 300);
+  }
+  function hideCaption(id) {
+    document.getElementById(id).classList.remove('show');
+  }
+
+  // Add a message into a chat body
+  function addMsg(bodyId, text, who, delay) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const body = document.getElementById(bodyId);
+        const msg = document.createElement('div');
+        msg.className = `msg ${who}`;
+        msg.innerHTML = text;
+        body.appendChild(msg);
+        // Trigger transition
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => msg.classList.add('in'));
+        });
+        // Auto-scroll
+        body.scrollTop = body.scrollHeight;
+        resolve();
+      }, delay);
+    });
+  }
+
+  // Typing indicator
+  function showTyping(bodyId, ms) {
+    return new Promise(resolve => {
+      const body = document.getElementById(bodyId);
+      const t = document.createElement('div');
+      t.className = 'msg bot in';
+      t.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+      body.appendChild(t);
+      body.scrollTop = body.scrollHeight;
+      setTimeout(() => { t.remove(); resolve(); }, ms);
+    });
+  }
+
+  // -----------------------------
+  // Run the 30s demo
+  // -----------------------------
+  function runDemo() {
+    document.getElementById('progress').classList.add('run');
+    document.getElementById('replayBtn').classList.remove('show');
+
+    // ===== SCENE 1: 0-4s =====
+    show('scene1');
+    showCaption('cap1');
+
+    setTimeout(() => hideCaption('cap1'), 3500);
+
+    // ===== SCENE 2: 4-10s =====
+    setTimeout(async () => {
+      show('scene2');
+      showCaption('cap2');
+      // Visitor types
+      await addMsg('chatBody2', 'I need a move-out cleaning this Friday.', 'user', 800);
+      await showTyping('chatBody2', 900);
+      await addMsg('chatBody2', "Sure — I can help collect a few details for a quote.", 'bot', 200);
+    }, 4000);
+
+    setTimeout(() => hideCaption('cap2'), 9500);
+
+    // ===== SCENE 3: 10-18s =====
+    setTimeout(async () => {
+      show('scene3');
+      showCaption('cap3');
+      const body = 'chatBody3';
+      // Pre-existing context
+      await addMsg(body, 'Got it. What ZIP code is the home in?', 'bot', 200);
+      await addMsg(body, '78704', 'user', 700);
+      await addMsg(body, 'Perfect — and the home size?', 'bot', 600);
+      await addMsg(body, '2 bed / 2 bath', 'user', 700);
+      await addMsg(body, 'Preferred date?', 'bot', 600);
+      await addMsg(body, 'Friday afternoon', 'user', 700);
+      await addMsg(body, 'Last two — your name and phone?', 'bot', 600);
+      await addMsg(body, 'Sarah · 512-555-0198', 'user', 700);
+    }, 10000);
+
+    setTimeout(() => hideCaption('cap3'), 17500);
+
+    // ===== SCENE 4: 18-24s =====
+    setTimeout(() => {
+      show('scene4');
+      showCaption('cap4');
+      // Show notification
+      setTimeout(() => document.getElementById('notif4').classList.add('in'), 200);
+      // Show big lead card
+      setTimeout(() => document.getElementById('leadCard').classList.add('in'), 600);
+      // Stagger lead rows
+      document.querySelectorAll('#leadCard .lead-row').forEach(row => {
+        const d = parseInt(row.dataset.d, 10);
+        setTimeout(() => row.classList.add('in'), 1000 + d);
+      });
+    }, 18000);
+
+    setTimeout(() => hideCaption('cap4'), 23500);
+
+    // ===== SCENE 5: 24-30s =====
+    setTimeout(() => {
+      show('scene5');
+      setTimeout(() => document.getElementById('ctaLogo').classList.add('in'), 200);
+      setTimeout(() => document.getElementById('ctaHead').classList.add('in'), 400);
+      setTimeout(() => document.getElementById('ctaBtn').classList.add('in'), 600);
+    }, 24000);
+
+    // ===== End =====
+    setTimeout(() => {
+      document.getElementById('replayBtn').classList.add('show');
+    }, 30200);
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('startOverlay').style.display = 'none';
+    runDemo();
+  });
+
+  document.getElementById('replayBtn').addEventListener('click', () => {
+    // Reset everything
+    document.querySelectorAll('.msg').forEach(m => {
+      if (!m.closest('#chatBody1')) m.remove();
+    });
+    // Remove the dynamically added scene 2/3 messages but keep scene 1's bot greeting
+    document.querySelectorAll('#chatBody2 .msg:not(:first-child)').forEach(m => m.remove());
+    document.getElementById('chatBody3').innerHTML = '';
+    document.getElementById('notif4').classList.remove('in');
+    document.getElementById('leadCard').classList.remove('in');
+    document.querySelectorAll('#leadCard .lead-row').forEach(r => r.classList.remove('in'));
+    document.getElementById('ctaLogo').classList.remove('in');
+    document.getElementById('ctaHead').classList.remove('in');
+    document.getElementById('ctaBtn').classList.remove('in');
+    document.querySelectorAll('.caption').forEach(c => c.classList.remove('show'));
+    const p = document.getElementById('progress');
+    p.classList.remove('run');
+    void p.offsetWidth; // restart animation
+    runDemo();
+  });
+</script>
+
+</body>
+</html>
